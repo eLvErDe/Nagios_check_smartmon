@@ -367,14 +367,17 @@ if __name__ == "__main__":
     vprint(2, "Get device name")
     # assemble device list to be monitored
     if not options.alldisks:
-        devices = [options.device]
+        devices = set([options.device])
     else:
-        devices = []
+        devices = set()
         # Regex for Valid device name
         valid_device_name = '/dev/[ahsv]d.*'
         for partition in psutil.disk_partitions():
             if re.search(valid_device_name, partition.device):
-                devices.append(partition.device.strip(partition.device[-1]))
+                devices.add(partition.device.strip(partition.device[-1]))
+            # Physical device for PCI-Express disk is not reported correctly by psutil
+            elif partition.device.startswith('/dev/nvme'):
+                devices.add(re.sub('n\d+p\d+$', '', partition.device))
         vprint(1, "Devices: %s" % devices)
 
     return_text = ""
